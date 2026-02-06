@@ -14,11 +14,11 @@
   const handleAdd = () => {
     store.addAccount()
   }
-
   // Удаление записи
   const handleRemove = (id: string) => {
     store.removeAccount(id)
   }
+
 </script>
 
 <template>

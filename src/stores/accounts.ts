@@ -1,61 +1,22 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
-import type { Account, AccountFormData, LabelItem } from '../types/account'
-
-const STORAGE_KEY = 'accounts-data'
-
-// Генерация уникального ID
-const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2)
-}
-
-// Парсинг строки меток в массив объектов
-export const parseLabels = (labelText: string): LabelItem[] => {
-  if (!labelText.trim()) return []
-
-  return labelText
-    .split(';')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0)
-    .map((text) => ({ text }))
-}
-
-// Преобразование массива меток обратно в строку
-export const labelsToString = (labels: LabelItem[]): string => {
-  return labels.map((item) => item.text).join('; ')
-}
+import type { Account, AccountFormData } from '../types/account'
+import { STORAGE_KEY } from '../utils/constants'
+import { generateId, parseLabels, labelsToString } from '../utils/helpers'
+import { useLocalStorage } from '../composables/useLocalStorage'
 
 export const useAccountsStore = defineStore('accounts', () => {
-  // Загрузка данных из localStorage
-  const loadFromStorage = (): Account[] => {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY)
-      if (data) {
-        return JSON.parse(data)
-      }
-    } catch (e) {
-      console.error('Ошибка загрузки из localStorage:', e)
-    }
-    return []
-  }
-
-  // Сохранение данных в localStorage
-  const saveToStorage = (accounts: Account[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts))
-    } catch (e) {
-      console.error('Ошибка сохранения в localStorage:', e)
-    }
-  }
+  // Работа с localStorage через хук
+  const { load, save } = useLocalStorage<Account[]>(STORAGE_KEY)
 
   // Состояние
-  const accounts = ref<Account[]>(loadFromStorage())
+  const accounts = ref<Account[]>(load() || [])
 
   // Следим за изменениями и сохраняем в localStorage
   watch(
     accounts,
     (newAccounts) => {
-      saveToStorage(newAccounts)
+      save(newAccounts)
     },
     { deep: true }
   )

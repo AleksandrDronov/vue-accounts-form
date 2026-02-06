@@ -4,6 +4,8 @@
   import { Delete } from '@element-plus/icons-vue'
   import type { Account, AccountFormData, ValidationErrors } from '../types/account'
   import { useAccountsStore } from '../stores/accounts'
+  import { ACCOUNT_TYPE_LABELS, ACCOUNT_TYPE_LDAP, ACCOUNT_TYPE_LOCAL } from '../utils/constants'
+  import { validateAccountForm } from '../utils/validation'
 
   const props = defineProps<{
     account: Account
@@ -25,13 +27,10 @@
   })
 
   // Показывать ли поле пароля
-  const showPassword = computed(() => formData.value.type === 'local')
+  const showPassword = computed(() => formData.value.type === ACCOUNT_TYPE_LOCAL)
 
   // Варианты типа записи
-  const typeOptions = [
-    { value: 'LDAP', label: 'LDAP' },
-    { value: 'local', label: 'Локальная' },
-  ]
+  const typeOptions = ACCOUNT_TYPE_LABELS
 
   // Синхронизация при изменении props
   watch(
@@ -44,10 +43,10 @@
 
   // Валидация формы
   const validate = (): boolean => {
-    errors.value.login = !formData.value.login.trim()
-    errors.value.password = showPassword.value && !formData.value.password.trim()
-
-    return !errors.value.login && !errors.value.password
+    const result = validateAccountForm(formData.value)
+    errors.value.login = result.login
+    errors.value.password = result.password
+    return !result.login && !result.password
   }
 
   // Сохранение при потере фокуса
@@ -60,7 +59,7 @@
   // Обработка изменения типа
   const handleTypeChange = () => {
     // Если переключились на LDAP, очищаем ошибку пароля
-    if (formData.value.type === 'LDAP') {
+    if (formData.value.type === ACCOUNT_TYPE_LDAP) {
       errors.value.password = false
     }
 
